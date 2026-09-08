@@ -1,0 +1,23 @@
+<resources>
+    <string name="app_name">ReCQU</string>
+    <string name="official_login_title">重庆大学官方登录</string>
+    <string name="browser_back">返回</string>
+    <string name="browser_reload">刷新</string>
+    <string name="login_preparing">准备登录</string>
+    <string name="login_instructions">请在官方页面完成登录和手机验证</string>
+    <string name="login_ready">官方会话已就绪</string>
+    <string name="login_failed">登录页面加载失败</string>
+    <string name="use_login_session">使用此会话</string>
+    <string name="widget_next_course">下一节课</string>
+    <string name="widget_next_course_description">显示下一节课程、地点和时间</string>
+    <string name="widget_today_courses">今日课程</string>
+    <string name="widget_today_courses_description">显示今天的课程安排</string>
+    <string name="widget_preview_next_course">下一节课程</string>
+    <string name="widget_preview_course_detail">地点 · 教师</string>
+    <string name="widget_preview_course_time">今天 08:30–10:10</string>
+    <string name="widget_preview_today_subtitle">9月7日 周一 · 第 1 周</string>
+    <string name="widget_preview_course_row_1">08:30  上午课程 · 教室</string>
+    <string name="widget_preview_course_row_2">13:30  下午课程 · 教室</string>
+    <string name="widget_preview_start_time">08:30</string>
+    <string name="widget_preview_location">教室位置</string>
+</resources>
