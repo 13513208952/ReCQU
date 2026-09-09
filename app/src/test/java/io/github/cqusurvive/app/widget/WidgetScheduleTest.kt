@@ -47,6 +47,46 @@ class WidgetScheduleTest {
     }
 
     @Test
+    fun `next course advances exactly when active course ends`() {
+        val snapshot = snapshot(
+            firstDay = LocalDate.of(2026, 9, 7),
+            meetings = listOf(
+                meeting(DayOfWeek.MONDAY, 1, "08:30", "10:10", "第一节"),
+                meeting(DayOfWeek.MONDAY, 1, "10:30", "12:10", "第二节"),
+            ),
+        )
+
+        val beforeEnd = buildWidgetSchedule(snapshot, LocalDateTime.of(2026, 9, 7, 10, 9))
+        val atEnd = buildWidgetSchedule(snapshot, LocalDateTime.of(2026, 9, 7, 10, 10))
+        val atNextStart = buildWidgetSchedule(snapshot, LocalDateTime.of(2026, 9, 7, 10, 30))
+
+        assertEquals("第一节", requireNotNull(beforeEnd.next).meeting.courseName)
+        assertTrue(beforeEnd.next!!.isActive)
+        assertEquals("第二节", requireNotNull(atEnd.next).meeting.courseName)
+        assertFalse(atEnd.next!!.isActive)
+        assertEquals(listOf("第二节"), atEnd.remainingToday.map { it.courseName })
+        assertEquals("第二节", requireNotNull(atNextStart.next).meeting.courseName)
+        assertTrue(atNextStart.next!!.isActive)
+    }
+
+    @Test
+    fun `next course advances to following day after today finishes`() {
+        val snapshot = snapshot(
+            firstDay = LocalDate.of(2026, 9, 7),
+            meetings = listOf(
+                meeting(DayOfWeek.MONDAY, 1, "08:30", "10:10", "周一课程"),
+                meeting(DayOfWeek.TUESDAY, 1, "08:30", "10:10", "周二课程"),
+            ),
+        )
+
+        val schedule = buildWidgetSchedule(snapshot, LocalDateTime.of(2026, 9, 7, 10, 10))
+
+        assertTrue(schedule.remainingToday.isEmpty())
+        assertEquals("周二课程", requireNotNull(schedule.next).meeting.courseName)
+        assertEquals(LocalDate.of(2026, 9, 8), schedule.next!!.date)
+    }
+
+    @Test
     fun `finds next meeting across week boundary`() {
         val snapshot = snapshot(
             firstDay = LocalDate.of(2026, 9, 7),
@@ -104,9 +144,10 @@ class WidgetScheduleTest {
         week: Int,
         start: String,
         end: String,
+        name: String = "测试课程",
     ) = CourseMeeting(
         courseCode = "TEST",
-        courseName = "测试课程",
+        courseName = name,
         teacher = "测试教师",
         location = "测试教室",
         day = day,

@@ -26,11 +26,9 @@ import kotlinx.coroutines.launch
 
 enum class TimetableWidgetKind { NEXT, TODAY }
 
-abstract class TimetableWidgetProvider(
-    private val kind: TimetableWidgetKind,
-) : AppWidgetProvider() {
+abstract class TimetableWidgetProvider : AppWidgetProvider() {
     override fun onUpdate(context: Context, manager: AppWidgetManager, appWidgetIds: IntArray) {
-        updateAsync(context, manager, appWidgetIds)
+        updateAllAsync(context)
     }
 
     override fun onAppWidgetOptionsChanged(
@@ -39,31 +37,19 @@ abstract class TimetableWidgetProvider(
         appWidgetId: Int,
         newOptions: Bundle,
     ) {
-        updateAsync(context, manager, intArrayOf(appWidgetId))
+        updateAllAsync(context)
     }
 
     override fun onReceive(context: Context, intent: Intent) {
         super.onReceive(context, intent)
-        if (intent.action in TIME_CHANGE_ACTIONS) {
-            val manager = AppWidgetManager.getInstance(context)
-            val ids = manager.getAppWidgetIds(ComponentName(context, javaClass))
-            updateAsync(context, manager, ids)
-        }
+        if (intent.action in TIME_CHANGE_ACTIONS) updateAllAsync(context)
     }
 
-    private fun updateAsync(context: Context, manager: AppWidgetManager, ids: IntArray) {
-        if (ids.isEmpty()) return
+    private fun updateAllAsync(context: Context) {
         val result = goAsync()
         CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
             try {
-                val snapshot = readCurrentSnapshot(context)
-                val now = LocalDateTime.now()
-                ids.forEach { id ->
-                    manager.updateAppWidget(
-                        id,
-                        renderWidget(context, kind, snapshot, now, manager.getAppWidgetOptions(id)),
-                    )
-                }
+                TimetableWidgetUpdater.updateAll(context.applicationContext)
             } finally {
                 result.finish()
             }
@@ -80,8 +66,8 @@ abstract class TimetableWidgetProvider(
     }
 }
 
-class NextCourseWidgetProvider : TimetableWidgetProvider(TimetableWidgetKind.NEXT)
-class TodayCoursesWidgetProvider : TimetableWidgetProvider(TimetableWidgetKind.TODAY)
+class NextCourseWidgetProvider : TimetableWidgetProvider()
+class TodayCoursesWidgetProvider : TimetableWidgetProvider()
 
 object TimetableWidgetUpdater {
     suspend fun updateAll(context: Context) {

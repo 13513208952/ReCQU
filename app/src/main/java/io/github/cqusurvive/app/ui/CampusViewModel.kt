@@ -55,6 +55,7 @@ class CampusViewModel(application: Application) : AndroidViewModel(application) 
             } else {
                 CampusUiState.Ready(demoRepository.loadSnapshot())
             }
+            TimetableWidgetUpdater.updateAll(getApplication())
         }
     }
 
