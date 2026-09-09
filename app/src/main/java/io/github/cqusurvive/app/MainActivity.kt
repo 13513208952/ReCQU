@@ -8,8 +8,11 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.lifecycleScope
 import io.github.cqusurvive.app.ui.CampusApp
 import io.github.cqusurvive.app.ui.theme.CquSurviveTheme
+import io.github.cqusurvive.app.widget.TimetableWidgetUpdater
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
     private var requestedDestination by mutableIntStateOf(HOME_DESTINATION)
@@ -21,6 +24,11 @@ class MainActivity : ComponentActivity() {
         setContent {
             CquSurviveTheme { CampusApp(requestedDestination = requestedDestination) }
         }
+    }
+
+    override fun onStart() {
+        super.onStart()
+        lifecycleScope.launch { TimetableWidgetUpdater.updateAll(applicationContext) }
     }
 
     override fun onNewIntent(intent: Intent) {
