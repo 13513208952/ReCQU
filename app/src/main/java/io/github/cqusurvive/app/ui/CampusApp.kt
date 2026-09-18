@@ -27,6 +27,7 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -50,6 +51,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import io.github.cqusurvive.app.MainActivity
 import io.github.cqusurvive.app.OfficialLoginActivity
+import io.github.cqusurvive.app.data.local.AppLaunchDestination
+import io.github.cqusurvive.app.data.local.AppLaunchSettings
 import io.github.cqusurvive.app.data.official.CquWebClient
 import io.github.cqusurvive.app.data.official.OfficialCampusRepository
 import io.github.cqusurvive.app.data.official.WebAuthState
@@ -82,6 +85,10 @@ fun CampusApp(
     val state by viewModel.state.collectAsStateWithLifecycle()
     val isRefreshing by viewModel.refreshing.collectAsStateWithLifecycle()
     val context = LocalContext.current
+    val appLaunchSettings = remember(context) { AppLaunchSettings(context) }
+    var appLaunchDestination by remember(appLaunchSettings) {
+        mutableStateOf(appLaunchSettings.destination())
+    }
     val webClient = remember { CquWebClient(context) }
     val authState by webClient.authState.collectAsStateWithLifecycle()
     var selected by rememberSaveable {
@@ -164,6 +171,11 @@ fun CampusApp(
                             viewModel.useDemoData()
                         },
                         onFirstDayChange = viewModel::setFirstDay,
+                        appLaunchDestination = appLaunchDestination,
+                        onAppLaunchDestinationChange = { destination ->
+                            appLaunchSettings.setDestination(destination)
+                            appLaunchDestination = destination
+                        },
                     )
                 }
             }
@@ -309,6 +321,8 @@ private fun MoreScreen(
     onConnect: () -> Unit,
     onUseDemo: () -> Unit,
     onFirstDayChange: (LocalDate) -> Unit,
+    appLaunchDestination: AppLaunchDestination,
+    onAppLaunchDestinationChange: (AppLaunchDestination) -> Unit,
 ) {
     val context = LocalContext.current
     val widgetPinningSupported = remember(context) {
@@ -356,6 +370,35 @@ private fun MoreScreen(
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
+        item { SectionTitle("启动设置") }
+        item {
+            Card(Modifier.fillMaxWidth()) {
+                Column(Modifier.padding(16.dp)) {
+                    Text("点击应用图标时优先打开", fontWeight = FontWeight.Bold)
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        "只影响从桌面启动 ReCQU；小组件仍会直接进入课表。",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Spacer(Modifier.height(12.dp))
+                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        LaunchDestinationButton(
+                            label = "首页",
+                            selected = appLaunchDestination == AppLaunchDestination.HOME,
+                            onClick = { onAppLaunchDestinationChange(AppLaunchDestination.HOME) },
+                            modifier = Modifier.weight(1f),
+                        )
+                        LaunchDestinationButton(
+                            label = "课表",
+                            selected = appLaunchDestination == AppLaunchDestination.TIMETABLE,
+                            onClick = { onAppLaunchDestinationChange(AppLaunchDestination.TIMETABLE) },
+                            modifier = Modifier.weight(1f),
+                        )
+                    }
+                }
+            }
+        }
         if (data.isDemo) {
             item { DemoNotice() }
             item { Button(onClick = onConnect, modifier = Modifier.fillMaxWidth()) { Text("连接重庆大学官方教务") } }
@@ -418,6 +461,20 @@ private fun MoreScreen(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
+    }
+}
+
+@Composable
+private fun LaunchDestinationButton(
+    label: String,
+    selected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    if (selected) {
+        Button(onClick = onClick, modifier = modifier) { Text(label) }
+    } else {
+        OutlinedButton(onClick = onClick, modifier = modifier) { Text(label) }
     }
 }
 

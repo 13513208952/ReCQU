@@ -9,6 +9,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.lifecycleScope
+import io.github.cqusurvive.app.data.local.AppLaunchSettings
 import io.github.cqusurvive.app.ui.CampusApp
 import io.github.cqusurvive.app.ui.theme.CquSurviveTheme
 import io.github.cqusurvive.app.widget.TimetableWidgetUpdater
@@ -37,8 +38,15 @@ class MainActivity : ComponentActivity() {
         requestedDestination = intent.destination()
     }
 
-    private fun Intent.destination(): Int =
-        getIntExtra(EXTRA_DESTINATION, HOME_DESTINATION).coerceIn(HOME_DESTINATION, MORE_DESTINATION)
+    private fun Intent.destination(): Int = resolveLaunchDestination(
+        explicitDestination = if (hasExtra(EXTRA_DESTINATION)) {
+            getIntExtra(EXTRA_DESTINATION, HOME_DESTINATION)
+        } else {
+            null
+        },
+        isLauncherLaunch = action == Intent.ACTION_MAIN && hasCategory(Intent.CATEGORY_LAUNCHER),
+        preferredDestination = AppLaunchSettings(this@MainActivity).destination().navigationIndex,
+    )
 
     companion object {
         const val EXTRA_DESTINATION = "io.github.cqusurvive.app.extra.DESTINATION"
@@ -47,3 +55,13 @@ class MainActivity : ComponentActivity() {
         const val MORE_DESTINATION = 3
     }
 }
+
+internal fun resolveLaunchDestination(
+    explicitDestination: Int?,
+    isLauncherLaunch: Boolean,
+    preferredDestination: Int,
+): Int = when {
+    explicitDestination != null -> explicitDestination
+    isLauncherLaunch -> preferredDestination
+    else -> MainActivity.HOME_DESTINATION
+}.coerceIn(MainActivity.HOME_DESTINATION, MainActivity.MORE_DESTINATION)
